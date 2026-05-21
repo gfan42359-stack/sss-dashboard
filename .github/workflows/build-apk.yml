@@ -10,66 +10,32 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
+      - uses: actions/setup-node@v4
+        with: {node-version: '20'}
 
-      - name: Setup Android SDK
+      - name: Create Capacitor App
         run: |
-          echo "ANDROID_HOME=${ANDROID_HOME}"
-          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}"
-          ls ${ANDROID_HOME}/cmdline-tools/latest/bin/ 2>/dev/null || echo "No cmdline-tools"
-          ls ${ANDROID_HOME}/platforms/ 2>/dev/null || echo "No platforms"
-          ls ${ANDROID_HOME}/build-tools/ 2>/dev/null || echo "No build-tools"
-          # Install SDK if missing
-          if [ ! -d "${ANDROID_HOME}/platforms/android-34" ]; then
-            yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager "platforms;android-34" "build-tools;34.0.0" 2>/dev/null || true
-          fi
+          # Download dashboard HTML as the app source
+          mkdir -p www
+          cp index.html www/
+          cp manifest.json www/
+          cp sw.js www/
+          cp icon-192.png www/
+          cp icon-512.png www/
+
+          npm init -y
+          npm install @capacitor/core @capacitor/cli @capacitor/android
+          npx cap init "SSS工厂看板" "com.sss.dashboard" --web-dir=www
+          npx cap add android
+
+      - name: Build APK
+        run: |
+          cd android
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
-
-      - name: Generate app files
-        run: |
-          mkdir -p app/src/main/java/com/sss/dashboard
-          echo 'include ":app"' > settings.gradle
-          echo 'plugins { id "com.android.application" version "8.2.0" apply false }' > build.gradle
-          cat > app/build.gradle << 'EOF'
-          plugins { id "com.android.application" }
-          android { namespace "com.sss.dashboard"; compileSdk 34
-            defaultConfig { applicationId "com.sss.dashboard"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }
-            buildTypes { release { minifyEnabled false } }
-            compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } }
-          EOF
-          cat > app/src/main/AndroidManifest.xml << 'EOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-            <uses-permission android:name="android.permission.INTERNET"/>
-            <application android:label="SSS 工厂看板" android:theme="@android:style/Theme.NoTitleBar">
-              <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
-                <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
-              </activity>
-            </application>
-          </manifest>
-          EOF
-          cat > app/src/main/java/com/sss/dashboard/MainActivity.java << 'EOF'
-          package com.sss.dashboard;
-          import android.app.Activity; import android.os.Bundle;
-          import android.webkit.*; import android.view.WindowManager;
-          public class MainActivity extends Activity {
-            @Override protected void onCreate(Bundle b) {
-              super.onCreate(b);
-              getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
-              WebView wv = new WebView(this);
-              wv.getSettings().setJavaScriptEnabled(true);
-              wv.getSettings().setDomStorageEnabled(true);
-              wv.setWebViewClient(new WebViewClient());
-              wv.loadUrl("https://FG-maker779.github.io/sss-dashboard/");
-              setContentView(wv);
-            }
-          }
-          EOF
-
-      - name: Build
-        run: ./gradlew assembleRelease || ./gradlew assembleDebug
+          ./gradlew assembleDebug
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sss-dashboard-apk
-          path: "app/build/outputs/apk/**/*.apk"
+          path: "android/app/build/outputs/apk/debug/*.apk"
