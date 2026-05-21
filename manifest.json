@@ -1,7 +1,7 @@
 {
   "name": "SSS 工厂生产看板",
   "short_name": "SSS看板",
-  "description": "Dashboard Produksi Pabrik SSS",
+  "description": "Dashboard Produksi Pabrik SSS v20260521",
   "start_url": ".",
   "display": "standalone",
   "background_color": "#0a0e14",
