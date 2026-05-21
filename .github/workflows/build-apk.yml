@@ -41,11 +41,18 @@ jobs:
           cat > app/src/main/java/com/sss/dashboard/MainActivity.java << 'END'
           package com.sss.dashboard;
           import android.app.Activity; import android.os.Bundle;
-          import android.webkit.*; import android.view.WindowManager;
+          import android.webkit.*; import android.view.*;
+          import android.widget.*; import android.graphics.Color;
+          import android.content.pm.ActivityInfo;
           public class MainActivity extends Activity {
+            private boolean isLandscape = true;
+            private Button orientBtn;
             @Override protected void onCreate(Bundle b) {
               super.onCreate(b);
               getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
+              setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+
+              FrameLayout fl = new FrameLayout(this);
               WebView wv = new WebView(this);
               WebSettings ws = wv.getSettings();
               ws.setJavaScriptEnabled(true); ws.setDomStorageEnabled(true);
@@ -55,8 +62,33 @@ jobs:
                   v.loadUrl(r.getUrl().toString()); return true;
                 }
               });
+              fl.addView(wv, new FrameLayout.LayoutParams(-1,-1));
+
+              orientBtn = new Button(this);
+              orientBtn.setText("Lanskap / 横屏");
+              orientBtn.setTextSize(11);
+              orientBtn.setTextColor(Color.parseColor("#e8a93e"));
+              orientBtn.setBackgroundColor(Color.parseColor("#1a2f44"));
+              orientBtn.setAlpha(0.75f);
+              orientBtn.setPadding(12,4,12,4);
+              orientBtn.setOnClickListener(v -> toggleOrient());
+              FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-2,-2);
+              bp.gravity = Gravity.TOP | Gravity.END;
+              bp.topMargin = 8; bp.rightMargin = 12;
+              fl.addView(orientBtn, bp);
+
               wv.loadUrl("https://FG-maker779.github.io/sss-dashboard/");
-              setContentView(wv);
+              setContentView(fl);
+            }
+            private void toggleOrient() {
+              isLandscape = !isLandscape;
+              if (isLandscape) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                orientBtn.setText("Lanskap / 横屏");
+              } else {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                orientBtn.setText("Potret / 竖屏");
+              }
             }
           }
           END
