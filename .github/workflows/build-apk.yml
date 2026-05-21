@@ -11,83 +11,124 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create WebView App
+      - name: Create App Files
         run: |
-          mkdir -p app/src/main/java/com/sss/dashboard app/src/main/res/values
+          mkdir -p app/src/main/java/com/sss/dashboard app/src/main/res/layout
 
-          echo 'include ":app"' > settings.gradle
-          echo 'plugins { id "com.android.application" version "8.2.0" apply false }' > build.gradle
+          cat > settings.gradle << 'END'
+          rootProject.name = "SSSDashboard"
+          include ":app"
+          END
+
+          cat > gradle.properties << 'END'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx1536m
+          END
+
+          cat > build.gradle << 'END'
+          plugins { id "com.android.application" version "7.4.2" apply false }
+          END
 
           cat > app/build.gradle << 'END'
           plugins { id "com.android.application" }
-          android { namespace "com.sss.dashboard"; compileSdk 34
-            defaultConfig { applicationId "com.sss.dashboard"; minSdk 21; targetSdk 34; versionCode 1; versionName "1.0" }
+          android {
+            namespace "com.sss.dashboard"
+            compileSdk 33
+            defaultConfig {
+              applicationId "com.sss.dashboard"
+              minSdk 21; targetSdk 33; versionCode 1; versionName "1.0"
+            }
             buildTypes { release { minifyEnabled false } }
-            compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 } }
+            compileOptions {
+              sourceCompatibility JavaVersion.VERSION_11
+              targetCompatibility JavaVersion.VERSION_11
+            }
+          }
           END
 
           cat > app/src/main/AndroidManifest.xml << 'END'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <uses-permission android:name="android.permission.INTERNET"/>
-            <application android:label="SSS 工厂看板" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:hardwareAccelerated="true">
-              <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
-                <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+            <application android:label="SSS Factory Dashboard"
+              android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+              android:hardwareAccelerated="true">
+              <activity android:name=".MainActivity" android:exported="true"
+                android:configChanges="orientation|screenSize|keyboardHidden">
+                <intent-filter>
+                  <action android:name="android.intent.action.MAIN"/>
+                  <category android:name="android.intent.category.LAUNCHER"/>
+                </intent-filter>
               </activity>
             </application>
           </manifest>
           END
 
+          cat > app/src/main/res/layout/activity_main.xml << 'END'
+          <?xml version="1.0" encoding="utf-8"?>
+          <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+            <WebView android:id="@+id/webview"
+              android:layout_width="match_parent"
+              android:layout_height="match_parent"/>
+            <Button android:id="@+id/orientBtn"
+              android:layout_width="wrap_content"
+              android:layout_height="wrap_content"
+              android:layout_gravity="top|end"
+              android:layout_marginTop="6dp"
+              android:layout_marginEnd="10dp"
+              android:text="Lanskap / 横屏"
+              android:textSize="10sp"
+              android:textColor="#e8a93e"
+              android:background="#991a2f44"
+              android:paddingLeft="10dp"
+              android:paddingRight="10dp"
+              android:paddingTop="3dp"
+              android:paddingBottom="3dp"/>
+          </FrameLayout>
+          END
+
           cat > app/src/main/java/com/sss/dashboard/MainActivity.java << 'END'
           package com.sss.dashboard;
-          import android.app.Activity; import android.os.Bundle;
-          import android.webkit.*; import android.view.*;
-          import android.widget.*; import android.graphics.Color;
+          import android.app.Activity;
+          import android.os.Bundle;
+          import android.view.WindowManager;
+          import android.webkit.*;
+          import android.widget.Button;
           import android.content.pm.ActivityInfo;
           public class MainActivity extends Activity {
-            private boolean isLandscape = true;
-            private Button orientBtn;
-            @Override protected void onCreate(Bundle b) {
+            private boolean landscape = true;
+            private Button btn;
+            private WebView wv;
+            @Override
+            protected void onCreate(Bundle b) {
               super.onCreate(b);
               getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
               setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-
-              FrameLayout fl = new FrameLayout(this);
-              WebView wv = new WebView(this);
+              setContentView(R.layout.activity_main);
+              wv = findViewById(R.id.webview);
               WebSettings ws = wv.getSettings();
-              ws.setJavaScriptEnabled(true); ws.setDomStorageEnabled(true);
+              ws.setJavaScriptEnabled(true);
+              ws.setDomStorageEnabled(true);
               ws.setMixedContentMode(WebSettings.MIXED_CONTENT_ALWAYS_ALLOW);
               wv.setWebViewClient(new WebViewClient() {
                 public boolean shouldOverrideUrlLoading(WebView v, WebResourceRequest r) {
                   v.loadUrl(r.getUrl().toString()); return true;
                 }
               });
-              fl.addView(wv, new FrameLayout.LayoutParams(-1,-1));
-
-              orientBtn = new Button(this);
-              orientBtn.setText("Lanskap / 横屏");
-              orientBtn.setTextSize(11);
-              orientBtn.setTextColor(Color.parseColor("#e8a93e"));
-              orientBtn.setBackgroundColor(Color.parseColor("#1a2f44"));
-              orientBtn.setAlpha(0.75f);
-              orientBtn.setPadding(12,4,12,4);
-              orientBtn.setOnClickListener(v -> toggleOrient());
-              FrameLayout.LayoutParams bp = new FrameLayout.LayoutParams(-2,-2);
-              bp.gravity = Gravity.TOP | Gravity.END;
-              bp.topMargin = 8; bp.rightMargin = 12;
-              fl.addView(orientBtn, bp);
-
               wv.loadUrl("https://FG-maker779.github.io/sss-dashboard/");
-              setContentView(fl);
+              btn = findViewById(R.id.orientBtn);
+              btn.setOnClickListener(v -> toggle());
             }
-            private void toggleOrient() {
-              isLandscape = !isLandscape;
-              if (isLandscape) {
+            private void toggle() {
+              landscape = !landscape;
+              if (landscape) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
-                orientBtn.setText("Lanskap / 横屏");
+                btn.setText("Lanskap / 横屏");
               } else {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
-                orientBtn.setText("Potret / 竖屏");
+                btn.setText("Potret / 竖屏");
               }
             }
           }
@@ -96,9 +137,10 @@ jobs:
           echo "sdk.dir=${ANDROID_HOME}" > local.properties
 
       - name: Build APK
-        run: ./gradlew assembleDebug
+        run: ./gradlew assembleDebug 2>&1 | tail -30
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: sss-dashboard-apk
           path: "app/build/outputs/apk/debug/*.apk"
