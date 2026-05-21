@@ -10,14 +10,31 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: {distribution: temurin, java-version: '17'}
-      - uses: actions/setup-node@v4
-        with: {node-version: '20'}
 
-      - name: Create Android WebView App
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          packages: 'platforms;android-34 build-tools;34.0.0'
+
+      - name: Create WebView App
         run: |
-          mkdir -p app/src/main/java/com/sss/dashboard app/src/main/res/values app/src/main/res/drawable
+          mkdir -p app/src/main/java/com/sss/dashboard app/src/main/res/values
 
-          cat > app/build.gradle << 'GRADLE'
+          cat > settings.gradle << 'EOF'
+          rootProject.name = 'SSSDashboard'
+          include ':app'
+          EOF
+
+          cat > build.gradle << 'EOF'
+          plugins { id 'com.android.application' version '8.2.0' apply false }
+          EOF
+
+          cat > gradle.properties << 'EOF'
+          android.useAndroidX=true
+          org.gradle.jvmargs=-Xmx2048m
+          EOF
+
+          cat > app/build.gradle << 'EOF'
           plugins { id 'com.android.application' }
           android {
             namespace 'com.sss.dashboard'
@@ -29,57 +46,59 @@ jobs:
             buildTypes { release { minifyEnabled false } }
             compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
           }
-          GRADLE
+          EOF
 
-          cat > app/src/main/AndroidManifest.xml << 'XML'
+          cat > app/src/main/AndroidManifest.xml << 'EOF'
           <?xml version="1.0" encoding="utf-8"?>
           <manifest xmlns:android="http://schemas.android.com/apk/res/android">
             <uses-permission android:name="android.permission.INTERNET"/>
-            <application android:allowBackup="true" android:label="SSS 工厂看板" android:supportsRtl="true" android:theme="@android:style/Theme.NoTitleBar.Fullscreen" android:icon="@mipmap/ic_launcher">
-              <activity android:name=".MainActivity" android:exported="true">
+            <application android:label="SSS 工厂看板" android:theme="@android:style/Theme.NoTitleBar" android:hardwareAccelerated="true">
+              <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize">
                 <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
               </activity>
             </application>
           </manifest>
-          XML
+          EOF
 
-          cat > app/src/main/java/com/sss/dashboard/MainActivity.java << 'JAVA'
+          cat > app/src/main/java/com/sss/dashboard/MainActivity.java << 'EOF'
           package com.sss.dashboard;
           import android.app.Activity;
           import android.os.Bundle;
           import android.webkit.WebView;
           import android.webkit.WebViewClient;
           import android.webkit.WebSettings;
+          import android.webkit.WebChromeClient;
+          import android.view.WindowManager;
           public class MainActivity extends Activity {
             @Override
             protected void onCreate(Bundle b) {
               super.onCreate(b);
+              getWindow().addFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN);
               WebView wv = new WebView(this);
               WebSettings ws = wv.getSettings();
               ws.setJavaScriptEnabled(true);
               ws.setDomStorageEnabled(true);
-              wv.setWebViewClient(new WebViewClient());
+              ws.setDatabaseEnabled(true);
+              ws.setAllowFileAccess(true);
+              wv.setWebViewClient(new WebViewClient() {
+                public boolean shouldOverrideUrlLoading(WebView view, String url) {
+                  view.loadUrl(url);
+                  return true;
+                }
+              });
+              wv.setWebChromeClient(new WebChromeClient());
               wv.loadUrl("https://FG-maker779.github.io/sss-dashboard/");
               setContentView(wv);
             }
           }
-          JAVA
+          EOF
 
-          cat > settings.gradle << 'GRADLE'
-          include ':app'
-          GRADLE
-
-          cat > build.gradle << 'GRADLE'
-          plugins { id 'com.android.application' version '8.2.0' apply false }
-          GRADLE
-
-          echo "sdk.dir=${ANDROID_HOME}" > local.properties
-
-          yes | ${ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager --licenses || true
-          ./gradlew assembleRelease || ./gradlew assembleDebug
+      - name: Build APK
+        run: |
+          ./gradlew assembleRelease
 
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: sss-dashboard-apk
-          path: "**/*.apk"
+          path: "app/build/outputs/apk/release/*.apk"
