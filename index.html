@@ -455,53 +455,65 @@ body::after {
 
 /* ===== RESPONSIVE ===== */
 @media (max-width: 900px) {
-  .topbar { min-height: auto; padding: 8px; }
-  .topbar-center { height: 140px; min-width: 240px; }
-  .factory-banner { transform: scaleX(0.44) scaleY(0.33); }
-  .topbar-title h1 { font-size: 16px; gap: 4px; }
-  .topbar-title .brand { font-size: 24px; }
-  .topbar-title .title-text { font-size: 12px; }
-  .semangat-badge svg { width: 180px; height: auto; }
-  .topright-img { height: 90px; }
-  .header-logo { height: 28px; }
-  .detail-table { font-size: 13px; }
-  .detail-table thead th { font-size: 10px; padding: 8px 10px; }
-  .detail-table tbody td { padding: 8px 10px; }
-  .value-col { font-size: 14px; }
-  .card { padding: 10px 12px; }
-  .card .card-value { font-size: 20px; }
-  .tab { padding: 8px 16px; font-size: 13px; }
-  .container { padding: 10px; }
-}
-
-@media (max-width: 600px) {
-  .topbar { flex-direction: column; align-items: stretch; gap: 4px; }
-  .topbar-left { flex-wrap: wrap; justify-content: center; gap: 4px; }
+  .container { padding: 8px; max-width: 100%; }
+  .topbar { min-height: auto; padding: 6px; gap: 4px; }
+  .topbar-left { gap: 4px; }
   .topbar-center { display: none; }
   .topbar-right { flex-direction: row !important; align-self: center; gap: 4px; }
+  .topbar-title h1 { font-size: 14px; gap: 4px; }
+  .topbar-title .brand { font-size: 22px; }
+  .topbar-title .title-text { font-size: 11px; }
+  .topbar-title .subtitle { font-size: 8px; }
+  .semangat-badge svg { width: 150px; height: auto; }
   .topright-img { height: 60px; }
-  .semangat-badge svg { width: 140px; }
-  .summary-row { grid-template-columns: repeat(2, 1fr); gap: 6px; }
+  .header-logo { height: 24px; }
+  .summary-row { grid-template-columns: repeat(3, 1fr); gap: 6px; }
   .card { padding: 8px 10px; }
-  .card .card-value { font-size: 17px; }
+  .card .card-value { font-size: 16px; }
   .card .card-label { font-size: 9px; }
-  .tabs { margin-bottom: 8px; }
-  .tab { padding: 6px 12px; font-size: 11px; }
-  .tab small { font-size: 8px; }
+  .card .card-hint { display: none; }
+  .tab { padding: 6px 14px; font-size: 12px; }
+  .tab small { font-size: 9px; }
+  .tabs { margin-bottom: 10px; }
   .detail-table { font-size: 11px; }
   .detail-table thead th { font-size: 9px; padding: 6px 8px; letter-spacing: 0; }
   .detail-table tbody td { padding: 6px 8px; }
   .value-col { font-size: 12px; }
-  .date-nav button { padding: 4px 8px; font-size: 11px; }
+  .change-col { font-size: 10px; }
+  .date-nav button { padding: 4px 8px; font-size: 10px; }
   .date-nav button small { font-size: 8px; }
-  .date-nav input[type="date"] { width: 105px; font-size: 11px; }
-  .today-btn { padding: 4px 8px; font-size: 11px; }
+  .date-nav input[type="date"] { width: 100px; font-size: 10px; }
+  .today-btn { padding: 4px 8px; font-size: 10px; }
   .today-btn small { font-size: 8px; }
   .section-title { font-size: 12px; }
-  .container { padding: 6px; }
-  .chart-container { height: 280px; }
+  .chart-container { height: 250px; }
   .modal { padding: 12px; width: 96%; }
-  .modal h2 { font-size: 16px; }
+}
+
+@media (max-width: 500px) {
+  .container { padding: 4px; }
+  .topbar { padding: 4px; }
+  .topbar-left { flex-wrap: wrap; justify-content: center; gap: 2px; }
+  .topbar-right { gap: 2px; }
+  .topbar-title .brand { font-size: 18px; }
+  .topbar-title .title-text { font-size: 10px; }
+  .semangat-badge svg { width: 120px; }
+  .topright-img { height: 40px; }
+  .summary-row { grid-template-columns: repeat(2, 1fr); gap: 4px; }
+  .card { padding: 6px 8px; }
+  .card .card-value { font-size: 14px; }
+  .card .card-label { font-size: 8px; }
+  .tab { padding: 5px 10px; font-size: 10px; }
+  .detail-table { font-size: 10px; }
+  .detail-table thead th { font-size: 8px; padding: 4px 6px; }
+  .detail-table tbody td { padding: 4px 6px; }
+  .value-col { font-size: 11px; }
+  .date-nav button { padding: 3px 6px; font-size: 9px; }
+  .date-nav input[type="date"] { width: 85px; font-size: 9px; }
+  .today-btn { padding: 3px 6px; font-size: 9px; }
+  .section-title { font-size: 11px; }
+  .chart-container { height: 200px; }
+  .modal { padding: 8px; width: 98%; }
 }
 </style>
 </head>
