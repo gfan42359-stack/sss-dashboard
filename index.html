@@ -710,7 +710,21 @@ function loadSheetJSONP(sheetName) {
       var keys = cols.map(function(h) { return h.indexOf('(')>0 ? h.split('(')[0].trim() : h.trim(); });
       var records = resp.table.rows.map(function(r) {
         var rec = {};
-        r.c.forEach(function(c, i) { if (c && c.v != null && keys[i]) rec[keys[i]] = c.v; });
+        r.c.forEach(function(c, i) {
+          if (!c || c.v == null || !keys[i]) return;
+          var v = c.v;
+          if (typeof v === 'string' && v.indexOf('Date') === 0) {
+            var m = v.match(/Date\((\d+),(\d+),(\d+)\)/);
+            if (m) v = m[1] + '-' + String(parseInt(m[2])).padStart(2,'0') + '-' + String(parseInt(m[3])).padStart(2,'0');
+          } else if (v instanceof Date) {
+            v = v.getFullYear() + '-' + String(v.getMonth()+1).padStart(2,'0') + '-' + String(v.getDate()).padStart(2,'0');
+          } else if (typeof v === 'string' && v.indexOf('/') > 0) {
+            var parts = v.split('/');
+            v = parts[0] + '-' + String(parts[1]).padStart(2,'0') + '-' + String(parts[2]).padStart(2,'0');
+          }
+          if (keys[i] === 'TPH' && typeof v === 'number') v = parseFloat((v / 1000).toFixed(2));
+          rec[keys[i]] = v;
+        });
         return rec;
       });
       resolve(records);
@@ -1279,16 +1293,8 @@ document.getElementById('chartModal').addEventListener('click', function(e) {
 
 // Firebase real-time sync — no periodic refresh needed
 // Auto refresh every 10 minutes
-let refreshSeconds = 600;
-setInterval(function() {
-  refreshSeconds -= 1;
-  const m = Math.floor(refreshSeconds / 60);
-  const s = refreshSeconds % 60;
-  document.getElementById('refreshCount').textContent = m + ':' + String(s).padStart(2, '0');
-  if (refreshSeconds <= 0) {
-    location.reload(true);
-  }
-}, 1000);
+// No page reload - JSONP updates data live every 10 seconds
+document.getElementById('refreshCount').textContent = 'Live';
 
 // ===== Start =====
 init();
